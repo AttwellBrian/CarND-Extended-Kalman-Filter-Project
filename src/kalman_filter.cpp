@@ -21,10 +21,17 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-  /**
-  TODO:
-    * predict the state
-  */
+  // external motion. aka noise. this is a gaussian with mean 0.
+  // so we can just ignore it. no-op placeholder is put here as a reminder.
+  VectorXd u = VectorXd(2);
+	u << 0, 0;
+
+  // F applies the timestep to x which contains both the 
+  // current position and current velocity.
+  x_ = F_ * x_ + u;
+
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q_;
 }
 
 /// update the state by using Kalman Filter equations
@@ -48,6 +55,7 @@ void KalmanFilter::Update(const VectorXd &z) {
   P_ = (I - K * H_) * P_;
 }
 
+// TODO: let's start with this??? 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
   TODO:
