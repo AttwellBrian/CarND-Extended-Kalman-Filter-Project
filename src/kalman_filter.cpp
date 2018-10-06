@@ -1,4 +1,5 @@
 #include "kalman_filter.h"
+#include <iostream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -23,8 +24,8 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 void KalmanFilter::Predict() {
   // external motion. aka noise. this is a gaussian with mean 0.
   // so we can just ignore it. no-op placeholder is put here as a reminder.
-  VectorXd u = VectorXd(2);
-	u << 0, 0;
+  VectorXd u = VectorXd(4);
+	u << 0, 0, 0, 0; // should do this for x_.size()
 
   // F applies the timestep to x which contains both the 
   // current position and current velocity.
@@ -38,7 +39,9 @@ void KalmanFilter::Predict() {
 void KalmanFilter::Update(const VectorXd &z) {
 
   // Identity matrix.
-  MatrixXd I = MatrixXd::Identity(2, 2);
+  MatrixXd I = MatrixXd::Identity(x_.size(), x_.size());
+
+  std::cout << "about to update " << std::endl;
 
   // error calculation (y). H is just so we ignore one of the dimensionsn in x. 
   VectorXd y = z - H_ * x_;
@@ -49,10 +52,13 @@ void KalmanFilter::Update(const VectorXd &z) {
   // Kalman gain.
   MatrixXd K =  P_ * Ht * Si;
 
+  std::cout << "just got kalman gain " << std::endl;
+
   //new state
   x_ = x_ + (K * y);
   // new covariance P
   P_ = (I - K * H_) * P_;
+  std::cout << "done updating " << std::endl;
 }
 
 // TODO: let's start with this??? 

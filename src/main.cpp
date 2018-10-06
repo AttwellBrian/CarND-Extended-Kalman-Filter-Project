@@ -29,12 +29,14 @@ std::string hasData(std::string s) {
 int main()
 {
 
+  
 
-
+/*
   if (true) {
     std::cout << "Exiting after tests " << std::endl;
     exit(1);
   }
+*/
 
 
 
