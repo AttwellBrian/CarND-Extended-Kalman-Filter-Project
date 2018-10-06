@@ -9,6 +9,7 @@ Tools::Tools() {}
 
 Tools::~Tools() {}
 
+// Implementation was taken from the lesson notes.
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   VectorXd rmse(4);
@@ -43,6 +44,8 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 	return rmse;
 }
 
+// Implementation was taken from the lesson notes.
+// Then added a minor bug fix. Didn't seem to change much.
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   MatrixXd Hj(3,4);
 	//recover state parameters
@@ -52,20 +55,20 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 	float vy = x_state(3);
 
 	//pre-compute a set of terms to avoid repeated calculation
-	float c1 = px*px+py*py;
-	float c2 = sqrt(c1);
-	float c3 = (c1*c2);
+	float radius_squared = px*px+py*py;
+	float radius = sqrt(radius_squared);
+	float radius_power_1_5 = sqrt(radius_squared*radius_squared*radius_squared);
 
 	//check division by zero
-	if(fabs(c1) < 0.0001){
+	if(fabs(radius_squared) < 0.0001){
 		cout << "CalculateJacobian () - Error - Division by Zero" << endl;
 		return Hj;
 	}
 
 	//compute the Jacobian matrix
-	Hj << (px/c2), (py/c2), 0, 0,
-		  -(py/c1), (px/c1), 0, 0,
-		  py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;
+	Hj << (px/radius), (py/radius), 0, 0,
+		  -(py/radius_squared), (px/radius_squared), 0, 0,
+		  py*(vx*py - vy*px)/radius_power_1_5, px*(px*vy - py*vx)/radius_power_1_5, px/radius, py/radius;
 
 	return Hj;
 }
