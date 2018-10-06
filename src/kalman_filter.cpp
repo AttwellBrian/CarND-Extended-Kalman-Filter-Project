@@ -14,16 +14,6 @@ KalmanFilter::KalmanFilter() {}
 
 KalmanFilter::~KalmanFilter() {}
 
-void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
-                        MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in) {
-  x_ = x_in;
-  P_ = P_in;
-  F_ = F_in;
-  H_ = H_in;
-  R_ = R_in;
-  Q_ = Q_in;
-}
-
 void KalmanFilter::Predict() {
   // F applies the timestep to x which contains both the 
   // current position and current velocity.
@@ -37,23 +27,10 @@ void KalmanFilter::Predict() {
 
 /// update the state by using Kalman Filter equations
 void KalmanFilter::Update(const VectorXd &z) {
-
-  // Identity matrix.
-  MatrixXd I = MatrixXd::Identity(x_.size(), x_.size());
-
-  // error calculation (y). H is just so we ignore one of the dimensionsn in x. 
+  // error calculation (y). H is just so we ignore one of the dimensions in x. 
   VectorXd y = z - H_ * x_;
-  MatrixXd Ht = H_.transpose();
-  // Sensor
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  // Kalman gain.
-  MatrixXd K =  P_ * Ht * Si;
 
-  //new state
-  x_ = x_ + (K * y);
-  // new covariance P
-  P_ = (I - K * H_) * P_;
+  UpdateCommon(y);
 }
 
 float normalize_radians(float radians) {
@@ -73,12 +50,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   float radius = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
   float angle = atan2(x_(1), x_(0));
 
-  // This is already normalized between pi and -ve pi.
-  // But when we roll over things seem to be problematic?
-  std::cout << "angle: " << angle << " deg: " << angle * 180 / M_PI << std::endl;
-  // this values are totally bogus.
-  std::cout << "  - angle atan inputs, x = " << x_(0) << ", y = " << x_(1) << std::endl;
-
   float radius_derivative;
 
   if (fabs(radius) < 0.0001) { // value treated as 0 inside tools.h
@@ -90,19 +61,17 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   VectorXd z_pred(3);
   z_pred << radius, angle, radius_derivative;
-  VectorXd y = z - z_pred;
-  
-
-  std::cout << "   delta angle = " << y(1) << std::endl;
+  VectorXd y = z - z_pred;  
   y(1) = normalize_radians(y(1));
-  std::cout << "   delta normlized angle = " << y(1) << std::endl;
 
+  UpdateCommon(y);
+}
 
-   // Common code from above. Should extract out.
-
+// Using the prediction_error, perform an update.
+void KalmanFilter::UpdateCommon(const Eigen::VectorXd &prediction_error) {
    // Identity matrix.
   MatrixXd I = MatrixXd::Identity(x_.size(), x_.size());
-
+   
   MatrixXd Ht = H_.transpose();
   // Sensor
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -111,7 +80,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   MatrixXd K =  P_ * Ht * Si;
 
   //new state
-  x_ = x_ + (K * y);
+  x_ = x_ + (K * prediction_error);
   // new covariance P
   P_ = (I - K * H_) * P_;
 }
