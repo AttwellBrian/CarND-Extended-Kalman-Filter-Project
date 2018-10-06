@@ -27,11 +27,25 @@ void KalmanFilter::Predict() {
   */
 }
 
+/// update the state by using Kalman Filter equations
 void KalmanFilter::Update(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Kalman Filter equations
-  */
+
+  // Identity matrix.
+  MatrixXd I = MatrixXd::Identity(2, 2);
+
+  // error calculation (y). H is just so we ignore one of the dimensionsn in x. 
+  VectorXd y = z - H_ * x_;
+  MatrixXd Ht = H_.transpose();
+  // Sensor
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  // Kalman gain.
+  MatrixXd K =  P_ * Ht * Si;
+
+  //new state
+  x_ = x_ + (K * y);
+  // new covariance P
+  P_ = (I - K * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
